@@ -1,0 +1,16 @@
+*.o
+*.obj
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.idb
+*.user
+*.vcxproj
+*.vcxproj.filters
+Makefile
+Makefile.*
+debug/
+release/
+build*/
+.qmake.stash
