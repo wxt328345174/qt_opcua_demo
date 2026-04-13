@@ -7,21 +7,21 @@ Simulator::Simulator(QObject *parent)
 {
     // 这里集中预留 PLC/OPC UA 变量。当前 nodeId 只是占位，后续再替换为真实 NodeId。
     addVariable({"cmdStart", QString::fromUtf8("启动命令"), "bool", false, "", "W",
-                 "TODO:mentor-provide-nodeid/cmdStart", QString::fromUtf8("点击启动按钮时写入 true")});
+                 "TODO:opcua-nodeid/cmdStart", QString::fromUtf8("点击启动按钮时写入 true")});
     addVariable({"cmdStop", QString::fromUtf8("停止命令"), "bool", false, "", "W",
-                 "TODO:mentor-provide-nodeid/cmdStop", QString::fromUtf8("点击停止按钮时写入 true")});
+                 "TODO:opcua-nodeid/cmdStop", QString::fromUtf8("点击停止按钮时写入 true")});
     addVariable({"runState", QString::fromUtf8("运行状态"), "bool", false, "", "R",
-                 "TODO:mentor-provide-nodeid/runState", QString::fromUtf8("设备是否运行")});
+                 "TODO:opcua-nodeid/runState", QString::fromUtf8("设备是否运行")});
     addVariable({"alarmActive", QString::fromUtf8("报警状态"), "bool", false, "", "R",
-                 "TODO:mentor-provide-nodeid/alarmActive", QString::fromUtf8("温度或压力超过阈值")});
+                 "TODO:opcua-nodeid/alarmActive", QString::fromUtf8("温度或压力超过阈值")});
     addVariable({"temperature", QString::fromUtf8("温度"), "double", m_temperature, "degC", "R",
-                 "TODO:mentor-provide-nodeid/temperature", QString::fromUtf8("模拟温度")});
+                 "TODO:opcua-nodeid/temperature", QString::fromUtf8("模拟温度")});
     addVariable({"pressure", QString::fromUtf8("压力"), "double", m_pressure, "MPa", "R",
-                 "TODO:mentor-provide-nodeid/pressure", QString::fromUtf8("模拟压力")});
+                 "TODO:opcua-nodeid/pressure", QString::fromUtf8("模拟压力")});
     addVariable({"productionCount", QString::fromUtf8("生产计数"), "int", m_count, "pcs", "R",
-                 "TODO:mentor-provide-nodeid/productionCount", QString::fromUtf8("运行时递增")});
+                 "TODO:opcua-nodeid/productionCount", QString::fromUtf8("运行时递增")});
     addVariable({"heartbeat", QString::fromUtf8("心跳"), "int", m_heartbeat, "", "R",
-                 "TODO:mentor-provide-nodeid/heartbeat", QString::fromUtf8("每秒递增")});
+                 "TODO:opcua-nodeid/heartbeat", QString::fromUtf8("每秒递增")});
 
     // QTimer 超时后发出 timeout 信号，connect 把这个信号连接到 updateData()。
     connect(&m_timer, &QTimer::timeout, this, &Simulator::updateData);

@@ -1,6 +1,6 @@
 # Qt + OPC UA + PLC 最小模拟示例
 
-这个项目是给初学者使用的 Qt Creator 简化版示例。它保留了基本的类拆分，同时只实现最小功能：
+本项目是一个基于 Qt 5 Widgets 的最小示例，用于完成图形界面、变量预留和模拟数据联动。项目保留基本类拆分，只实现必要功能：
 
 - 打开一个 Qt Widgets 窗口。
 - 点击“启动”和“停止”按钮。
@@ -76,27 +76,27 @@ make
 qmake qt_opcua_demo.pro
 ```
 
-## 四、代码学习顺序
+## 四、代码结构
 
-建议按这个顺序看代码：
+项目代码按职责拆分如下：
 
-1. `main.cpp`：看懂程序从哪里开始。
+1. `main.cpp`：程序入口。
    - `QApplication app(argc, argv);` 创建 Qt 图形程序对象。
    - `Simulator simulator;` 创建模拟数据对象。
    - `MainWindow window(&simulator);` 创建窗口，并把模拟器传给窗口。
    - `return app.exec();` 进入 Qt 事件循环。
-2. `simulator.h`：看懂模拟器类对外提供什么。
+2. `simulator.h`：声明模拟器类对外提供的接口。
    - `variables()` 返回变量表。
    - `start()` / `stop()` 响应启动和停止。
    - `variableChanged(...)` 通知界面变量变了。
    - `logMessage(...)` 通知界面追加日志。
-3. `simulator.cpp`：看懂模拟数据怎么变化。
+3. `simulator.cpp`：实现模拟数据变化。
    - 构造函数里预留变量。
    - `QTimer` 每 1 秒调用 `updateData()`。
    - 运行时刷新温度、压力、心跳、生产计数。
    - 温度或压力超过阈值时触发报警。
-4. `mainwindow.h`：看懂窗口类里有哪些控件成员。
-5. `mainwindow.cpp`：看懂界面怎么创建和更新。
+4. `mainwindow.h`：声明窗口类和控件成员。
+5. `mainwindow.cpp`：实现界面创建和刷新。
    - `createStatusBox()` 创建顶部状态区。
    - `createControlBox()` 创建启动/停止按钮。
    - `createTableBox()` 创建变量表。
@@ -119,12 +119,12 @@ qmake qt_opcua_demo.pro
 `OPC UA NodeId` 列现在都是占位内容，例如：
 
 ```text
-TODO:mentor-provide-nodeid/temperature
+TODO:opcua-nodeid/temperature
 ```
 
-等 mentor 后续给出真实 PLC / OPC UA 变量映射后，再替换这些占位内容。
+获得真实 PLC / OPC UA 变量映射后，替换这些占位内容。
 
-## 六、可以自己练习修改的地方
+## 六、可配置项
 
 - 把刷新周期从 1 秒改成 0.5 秒：在 `simulator.cpp` 里把 `m_timer.start(1000);` 改成 `m_timer.start(500);`。
 - 调低温度报警阈值：在 `simulator.cpp` 里修改 `m_temperature >= 78.0`。

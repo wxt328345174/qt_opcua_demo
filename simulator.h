@@ -9,7 +9,7 @@
 
 struct VariableRow
 {
-    // 表格中的一行变量信息。后续接真实 OPC UA 时，nodeId 字段替换为导师提供的 NodeId。
+    // 表格中的一行变量信息。接入真实 OPC UA 时，nodeId 字段替换为实际配置的 NodeId。
     QString id;
     QString name;
     QString type;
