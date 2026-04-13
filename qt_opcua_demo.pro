@@ -7,14 +7,12 @@ TEMPLATE = app
 TARGET = qt_opcua_demo
 
 SOURCES += \
-    src/main.cpp \
-    src/mainwindow.cpp \
-    src/simulatedbackend.cpp
+    main.cpp \
+    mainwindow.cpp \
+    simulator.cpp
 
 HEADERS += \
-    src/idatabackend.h \
-    src/mainwindow.h \
-    src/simulatedbackend.h \
-    src/variableinfo.h
+    mainwindow.h \
+    simulator.h
 
 win32:msvc:QMAKE_CXXFLAGS += /utf-8

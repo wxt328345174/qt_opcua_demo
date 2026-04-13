@@ -1,21 +1,68 @@
-# Qt OPC UA PLC 最小示例
+# Qt + OPC UA + PLC 最小模拟示例
 
-本项目是一个基于 Qt 5 Widgets 的最小示例，用于先完成图形界面、PLC
-变量预留和模拟数据联动。当前阶段不连接真实 PLC，也不依赖 Qt OPC UA
-模块。
+这个项目是给初学者使用的 Qt Creator 简化版示例。它保留了基本的类拆分，同时只实现最小功能：
 
-## 当前内容
+- 打开一个 Qt Widgets 窗口。
+- 点击“启动”和“停止”按钮。
+- 每秒模拟刷新温度、压力、心跳、生产计数。
+- 在表格中预留未来要映射到 PLC / OPC UA 的变量。
+- 温度或压力超过阈值时显示报警。
 
-- Qt Widgets 主窗口：运行状态、控制按钮、变量表格、运行日志。
-- `IDataBackend`：界面和数据后端之间的接口边界。
-- `SimulatedBackend`：使用定时器模拟温度、压力、液位、生产计数、心跳、
-  运行状态和报警状态。
-- OPC UA NodeId 暂时使用占位字符串，例如
-  `TODO:mentor-provide-nodeid/temperature`。
+当前项目不连接真实 PLC，也不依赖 Qt OPC UA 模块。
 
-## openEuler 22.03 LTS-SP3 构建方式
+## 一、目录内容
 
-先安装 Qt 5 Widgets 相关开发工具，然后使用 `qmake-qt5` 构建：
+```text
+qt_opcua_demo/
+├── qt_opcua_demo.pro
+├── main.cpp
+├── mainwindow.h
+├── mainwindow.cpp
+├── simulator.h
+├── simulator.cpp
+└── README.md
+```
+
+- `qt_opcua_demo.pro`：qmake 项目文件，告诉 Qt Creator 编译哪些源码文件。
+- `main.cpp`：程序入口，只负责创建应用、模拟器和主窗口。
+- `MainWindow`：界面类，负责按钮、状态栏、变量表格和日志显示。
+- `Simulator`：模拟器类，负责启动/停止、定时器刷新、变量值和报警状态。
+- `README.md`：当前说明文档。
+
+## 二、在 Windows 上用 Qt Creator 打开项目
+
+1. 打开 Qt Creator。
+2. 点击菜单：`File -> Open File or Project`。
+3. 选择：
+
+   ```text
+   E:\qt_opcua_demo\qt_opcua_demo.pro
+   ```
+
+4. Qt Creator 会进入 Kit 选择界面，选择一个 Qt 5 的 Kit。
+5. 点击 `Configure Project`。
+6. 左侧切换到 `Edit`，依次查看 `main.cpp`、`mainwindow.cpp`、`simulator.cpp`。
+7. 点击左下角绿色三角按钮运行。
+
+如果 Windows 上运行时报：
+
+```text
+Cannot run compiler 'cl'
+```
+
+说明当前 Qt Kit 使用 MSVC 编译器，但这台 Windows 没有配置好 MSVC 命令行环境。
+这种情况下，可以先在 Windows 上用 Qt Creator 看代码、改代码，然后把整个
+`qt_opcua_demo` 文件夹复制到 openEuler 设备上编译运行。
+
+## 三、在 openEuler 22.03 LTS-SP3 设备上编译运行
+
+进入项目目录：
+
+```bash
+cd qt_opcua_demo
+```
+
+执行：
 
 ```bash
 qmake-qt5 qt_opcua_demo.pro
@@ -23,15 +70,42 @@ make
 ./qt_opcua_demo
 ```
 
-如果某些环境里 Qt 5 的 qmake 命令名就是 `qmake`，也可以把第一行替换为
-`qmake qt_opcua_demo.pro`。
+如果设备上的 Qt 5 命令叫 `qmake`，第一行可以改成：
 
-当前阶段只需要 Qt 的 `core`、`gui`、`widgets` 模块。`.pro` 文件中没有加入
-`QtOpcUa`，这样目标设备即使暂时没有 OPC UA 模块，也可以先编译并运行界面。
+```bash
+qmake qt_opcua_demo.pro
+```
 
-## 变量和后续映射说明
+## 四、代码学习顺序
 
-当前已预留以下通用工控变量：
+建议按这个顺序看代码：
+
+1. `main.cpp`：看懂程序从哪里开始。
+   - `QApplication app(argc, argv);` 创建 Qt 图形程序对象。
+   - `Simulator simulator;` 创建模拟数据对象。
+   - `MainWindow window(&simulator);` 创建窗口，并把模拟器传给窗口。
+   - `return app.exec();` 进入 Qt 事件循环。
+2. `simulator.h`：看懂模拟器类对外提供什么。
+   - `variables()` 返回变量表。
+   - `start()` / `stop()` 响应启动和停止。
+   - `variableChanged(...)` 通知界面变量变了。
+   - `logMessage(...)` 通知界面追加日志。
+3. `simulator.cpp`：看懂模拟数据怎么变化。
+   - 构造函数里预留变量。
+   - `QTimer` 每 1 秒调用 `updateData()`。
+   - 运行时刷新温度、压力、心跳、生产计数。
+   - 温度或压力超过阈值时触发报警。
+4. `mainwindow.h`：看懂窗口类里有哪些控件成员。
+5. `mainwindow.cpp`：看懂界面怎么创建和更新。
+   - `createStatusBox()` 创建顶部状态区。
+   - `createControlBox()` 创建启动/停止按钮。
+   - `createTableBox()` 创建变量表。
+   - `createLogBox()` 创建日志框。
+   - `connect(...)` 把按钮、模拟器信号和界面槽函数连接起来。
+
+## 五、变量说明
+
+表格中预留了这些变量：
 
 - `cmdStart`：启动命令，写入型 bool。
 - `cmdStop`：停止命令，写入型 bool。
@@ -39,10 +113,20 @@ make
 - `alarmActive`：报警状态，读取型 bool。
 - `temperature`：温度，读取型 double，单位 `degC`。
 - `pressure`：压力，读取型 double，单位 `MPa`。
-- `level`：液位，读取型 double，单位 `%`。
 - `productionCount`：生产计数，读取型 int。
 - `heartbeat`：心跳，读取型 int。
 
-后续 mentor 提供 PLC 变量和 OPC UA NodeId 后，不需要改主窗口界面。可以新增
-一个实现 `IDataBackend` 的后端类，例如 `OpcUaBackend`，再把当前占位 NodeId
-替换为实际 NodeId。
+`OPC UA NodeId` 列现在都是占位内容，例如：
+
+```text
+TODO:mentor-provide-nodeid/temperature
+```
+
+等 mentor 后续给出真实 PLC / OPC UA 变量映射后，再替换这些占位内容。
+
+## 六、可以自己练习修改的地方
+
+- 把刷新周期从 1 秒改成 0.5 秒：在 `simulator.cpp` 里把 `m_timer.start(1000);` 改成 `m_timer.start(500);`。
+- 调低温度报警阈值：在 `simulator.cpp` 里修改 `m_temperature >= 78.0`。
+- 调低压力报警阈值：在 `simulator.cpp` 里修改 `m_pressure >= 0.42`。
+- 增加一个新变量：在 `simulator.cpp` 的 `addVariable(...)` 位置照着已有变量再加一行。
