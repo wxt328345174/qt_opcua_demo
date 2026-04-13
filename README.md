@@ -15,13 +15,16 @@
 
 ## openEuler 22.03 LTS-SP3 构建方式
 
-先安装 Qt 5 Widgets 相关开发工具，然后使用 qmake 构建：
+先安装 Qt 5 Widgets 相关开发工具，然后使用 `qmake-qt5` 构建：
 
 ```bash
-qmake qt_opcua_demo.pro
+qmake-qt5 qt_opcua_demo.pro
 make
 ./qt_opcua_demo
 ```
+
+如果某些环境里 Qt 5 的 qmake 命令名就是 `qmake`，也可以把第一行替换为
+`qmake qt_opcua_demo.pro`。
 
 当前阶段只需要 Qt 的 `core`、`gui`、`widgets` 模块。`.pro` 文件中没有加入
 `QtOpcUa`，这样目标设备即使暂时没有 OPC UA 模块，也可以先编译并运行界面。
