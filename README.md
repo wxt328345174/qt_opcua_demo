@@ -1,16 +1,19 @@
-# Qt + OPC UA + PLC 最小模拟示例
+# Qt + OPC UA + PLC 读写变量模拟示例
 
-本项目是一个基于 Qt 5 Widgets 的最小示例，用于完成图形界面、变量预留和模拟数据联动。项目保留基本类拆分，只实现必要功能：
+本项目是一个基于 Qt 5 Widgets 的最小示例，用于完成图形界面、变量预留、模拟读取数据刷新和模拟写入数据生效。当前阶段不连接真实 PLC，也不依赖 Qt OPC UA 模块。
 
-- 打开一个 Qt Widgets 窗口。
-- 点击“启动”和“停止”按钮。
-- 每秒模拟刷新温度、压力、心跳、生产计数。
-- 在表格中预留未来要映射到 PLC / OPC UA 的变量。
-- 温度或压力超过阈值时显示报警。
+## 一、功能说明
 
-当前项目不连接真实 PLC，也不依赖 Qt OPC UA 模块。
+- 使用 Qt Widgets 创建桌面窗口。
+- 提供“读取数据”和“写入数据”两组变量表。
+- 读取数据表只读显示，定时刷新模拟 PLC 数据。
+- 写入数据表允许编辑“当前值”列，并支持“写入选中项”和“写入全部”。
+- 覆盖 `int`、`double`、`bool`、`array`、`struct` 五类变量。
+- 保留 OPC UA NodeId 占位字段，便于后续替换为实际变量映射。
+- 顶部状态区显示运行状态、报警状态、实际温度、设定温度、心跳。
+- 日志区记录启动、停止、写入成功、写入失败和报警变化。
 
-## 一、目录内容
+## 二、目录内容
 
 ```text
 qt_opcua_demo/
@@ -23,13 +26,57 @@ qt_opcua_demo/
 └── README.md
 ```
 
-- `qt_opcua_demo.pro`：qmake 项目文件，告诉 Qt Creator 编译哪些源码文件。
-- `main.cpp`：程序入口，只负责创建应用、模拟器和主窗口。
-- `MainWindow`：界面类，负责按钮、状态栏、变量表格和日志显示。
-- `Simulator`：模拟器类，负责启动/停止、定时器刷新、变量值和报警状态。
-- `README.md`：当前说明文档。
+- `qt_opcua_demo.pro`：qmake 项目文件。
+- `main.cpp`：程序入口，创建 Qt 应用、模拟器和主窗口。
+- `MainWindow`：界面类，负责状态显示、读写表格、按钮和日志。
+- `Simulator`：模拟后端，负责读取数据刷新、写入校验和状态联动。
 
-## 二、在 Windows 上用 Qt Creator 打开项目
+## 三、变量说明
+
+读取数据：
+
+| ID | 名称 | 类型 | 单位 | 说明 |
+| --- | --- | --- | --- | --- |
+| `actualTemperature` | 实际温度 | `double` | `degC` | 模拟读取的实际温度 |
+| `actualCount` | 实际计数 | `int` | `pcs` | 模拟读取的生产计数 |
+| `heartbeat` | 心跳 | `int` |  | 每秒递增 |
+| `motorRunning` | 电机运行状态 | `bool` |  | 模拟读取的电机状态 |
+| `alarmActive` | 报警状态 | `bool` |  | 温度超过阈值时置为 `true` |
+| `zoneTemperatures` | 分区温度 | `array` | `degC` | JSON 数组，例如 `[62.1,63.0,61.8]` |
+| `deviceStatus` | 设备状态 | `struct` |  | JSON 对象，例如 `{"mode":"AUTO","errorCode":0,"loadPercent":65.0}` |
+
+写入数据：
+
+| ID | 名称 | 类型 | 单位 | 说明 |
+| --- | --- | --- | --- | --- |
+| `setTemperature` | 设定温度 | `double` | `degC` | 写入目标温度 |
+| `targetCount` | 目标计数 | `int` | `pcs` | 写入目标生产数量 |
+| `enableMotor` | 电机使能 | `bool` |  | 写入 `true` 启动电机，`false` 停止电机 |
+| `targetSpeeds` | 目标速度 | `array` | `rpm` | JSON 数组，例如 `[100,120,110]` |
+| `recipeParams` | 配方参数 | `struct` |  | JSON 对象，例如 `{"recipeId":1,"temperature":60.0,"durationSec":30,"enabled":true}` |
+
+OPC UA NodeId 当前使用占位格式：
+
+```text
+TODO:opcua-nodeid/read/actualTemperature
+TODO:opcua-nodeid/write/setTemperature
+```
+
+接入真实 OPC UA 时，替换这些占位字段，并将 `Simulator` 的模拟读写逻辑替换为实际 OPC UA 读写逻辑。
+
+## 四、写入格式
+
+写入数据表的“当前值”列支持以下格式：
+
+- `int`：十进制整数，例如 `100`
+- `double`：小数或整数，例如 `60.5`
+- `bool`：`true`、`false`、`1`、`0`
+- `array`：JSON 数组，例如 `[100,120,110]`
+- `struct`：JSON 对象，例如 `{"recipeId":1,"temperature":60.0,"durationSec":30,"enabled":true}`
+
+如果输入格式错误，程序不会更新变量，并会在运行日志中显示错误信息。
+
+## 五、Windows Qt Creator 打开方式
 
 1. 打开 Qt Creator。
 2. 点击菜单：`File -> Open File or Project`。
@@ -39,10 +86,9 @@ qt_opcua_demo/
    E:\qt_opcua_demo\qt_opcua_demo.pro
    ```
 
-4. Qt Creator 会进入 Kit 选择界面，选择一个 Qt 5 的 Kit。
+4. 选择可用的 Qt 5 Kit。
 5. 点击 `Configure Project`。
-6. 左侧切换到 `Edit`，依次查看 `main.cpp`、`mainwindow.cpp`、`simulator.cpp`。
-7. 点击左下角绿色三角按钮运行。
+6. 点击左下角绿色三角按钮构建并运行。
 
 如果 Windows 上运行时报：
 
@@ -50,11 +96,9 @@ qt_opcua_demo/
 Cannot run compiler 'cl'
 ```
 
-说明当前 Qt Kit 使用 MSVC 编译器，但这台 Windows 没有配置好 MSVC 命令行环境。
-这种情况下，可以先在 Windows 上用 Qt Creator 看代码、改代码，然后把整个
-`qt_opcua_demo` 文件夹复制到 openEuler 设备上编译运行。
+说明当前 Qt Kit 使用 MSVC 编译器，但 Windows 编译环境未配置完整。可以在 Windows 上查看和编辑项目，再将整个 `qt_opcua_demo` 文件夹复制到 openEuler 设备上编译运行。
 
-## 三、在 openEuler 22.03 LTS-SP3 设备上编译运行
+## 六、openEuler 22.03 LTS-SP3 编译运行
 
 进入项目目录：
 
@@ -76,57 +120,11 @@ make
 qmake qt_opcua_demo.pro
 ```
 
-## 四、代码结构
+## 七、验证点
 
-项目代码按职责拆分如下：
-
-1. `main.cpp`：程序入口。
-   - `QApplication app(argc, argv);` 创建 Qt 图形程序对象。
-   - `Simulator simulator;` 创建模拟数据对象。
-   - `MainWindow window(&simulator);` 创建窗口，并把模拟器传给窗口。
-   - `return app.exec();` 进入 Qt 事件循环。
-2. `simulator.h`：声明模拟器类对外提供的接口。
-   - `variables()` 返回变量表。
-   - `start()` / `stop()` 响应启动和停止。
-   - `variableChanged(...)` 通知界面变量变了。
-   - `logMessage(...)` 通知界面追加日志。
-3. `simulator.cpp`：实现模拟数据变化。
-   - 构造函数里预留变量。
-   - `QTimer` 每 1 秒调用 `updateData()`。
-   - 运行时刷新温度、压力、心跳、生产计数。
-   - 温度或压力超过阈值时触发报警。
-4. `mainwindow.h`：声明窗口类和控件成员。
-5. `mainwindow.cpp`：实现界面创建和刷新。
-   - `createStatusBox()` 创建顶部状态区。
-   - `createControlBox()` 创建启动/停止按钮。
-   - `createTableBox()` 创建变量表。
-   - `createLogBox()` 创建日志框。
-   - `connect(...)` 把按钮、模拟器信号和界面槽函数连接起来。
-
-## 五、变量说明
-
-表格中预留了这些变量：
-
-- `cmdStart`：启动命令，写入型 bool。
-- `cmdStop`：停止命令，写入型 bool。
-- `runState`：运行状态，读取型 bool。
-- `alarmActive`：报警状态，读取型 bool。
-- `temperature`：温度，读取型 double，单位 `degC`。
-- `pressure`：压力，读取型 double，单位 `MPa`。
-- `productionCount`：生产计数，读取型 int。
-- `heartbeat`：心跳，读取型 int。
-
-`OPC UA NodeId` 列现在都是占位内容，例如：
-
-```text
-TODO:opcua-nodeid/temperature
-```
-
-获得真实 PLC / OPC UA 变量映射后，替换这些占位内容。
-
-## 六、可配置项
-
-- 把刷新周期从 1 秒改成 0.5 秒：在 `simulator.cpp` 里把 `m_timer.start(1000);` 改成 `m_timer.start(500);`。
-- 调低温度报警阈值：在 `simulator.cpp` 里修改 `m_temperature >= 78.0`。
-- 调低压力报警阈值：在 `simulator.cpp` 里修改 `m_pressure >= 0.42`。
-- 增加一个新变量：在 `simulator.cpp` 的 `addVariable(...)` 位置照着已有变量再加一行。
+- 程序启动后显示“读取数据”和“写入数据”两张表。
+- 点击“启动”后，电机运行状态变为 `true`，读取数据开始变化。
+- 修改 `setTemperature` 后点击“写入选中项”，顶部设定温度同步更新。
+- 修改 `enableMotor` 为 `false` 后写入，电机运行状态变为停止。
+- `array` 和 `struct` 输入非法 JSON 时，日志显示写入失败。
+- 实际温度超过 `78 degC` 后，报警状态变为 `true`。
