@@ -1,24 +1,13 @@
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 
+#include "variable_row.h"
+
 #include <QObject>
 #include <QString>
 #include <QTimer>
 #include <QVariant>
 #include <QVector>
-
-struct VariableRow
-{
-    // 表格中的一行变量信息。接入真实 OPC UA 时，nodeId 字段替换为实际配置的 NodeId。
-    QString id;
-    QString name;
-    QString type;
-    QVariant value;
-    QString unit;
-    QString access;
-    QString nodeId;
-    QString note;
-};
 
 class Simulator : public QObject
 {
