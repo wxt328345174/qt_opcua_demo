@@ -2,7 +2,6 @@
 
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QJsonObject>
 #include <QJsonParseError>
 #include <QStringList>
 
@@ -25,34 +24,79 @@ QString nodeIdText(const QString &identifier)
 
 QString compactStructValue(int a, double b, bool c)
 {
-    QJsonObject object;
-    object.insert("A", a);
-    object.insert("B", b);
-    object.insert("C", c);
-    return QString::fromUtf8(QJsonDocument(object).toJson(QJsonDocument::Compact));
+    return QString::fromLatin1("(A := %1, B := %2, C := %3)")
+            .arg(a)
+            .arg(QString::number(b, 'f', 2))
+            .arg(c ? QString::fromLatin1("TRUE") : QString::fromLatin1("FALSE"));
 }
 
-bool jsonBoolValue(const QJsonValue &value, bool *ok)
+bool stBoolValue(const QString &text, bool *ok)
 {
-    *ok = true;
-    if (value.isBool()) {
-        return value.toBool();
+    const QString upper = text.trimmed().toUpper();
+    if (upper == QString::fromLatin1("TRUE") || upper == QString::fromLatin1("1")) {
+        *ok = true;
+        return true;
     }
-    if (value.isDouble()) {
-        return value.toInt() != 0;
-    }
-    if (value.isString()) {
-        const QString lower = value.toString().trimmed().toLower();
-        if (lower == "true" || lower == "1") {
-            return true;
-        }
-        if (lower == "false" || lower == "0") {
-            return false;
-        }
+    if (upper == QString::fromLatin1("FALSE") || upper == QString::fromLatin1("0")) {
+        *ok = true;
+        return false;
     }
 
     *ok = false;
     return false;
+}
+
+bool parseStDataValue(const QString &text, int *a, double *b, bool *c)
+{
+    const QString trimmed = text.trimmed();
+    if (!trimmed.startsWith(QLatin1Char('(')) || !trimmed.endsWith(QLatin1Char(')'))) {
+        return false;
+    }
+
+    bool hasA = false;
+    bool hasB = false;
+    bool hasC = false;
+    const QString body = trimmed.mid(1, trimmed.length() - 2);
+    const QStringList assignments = body.split(QLatin1Char(','), Qt::SkipEmptyParts);
+
+    for (int i = 0; i < assignments.size(); ++i) {
+        const QString assignment = assignments.at(i).trimmed();
+        const int separator = assignment.indexOf(QString::fromLatin1(":="));
+        if (separator < 0) {
+            return false;
+        }
+
+        const QString name = assignment.left(separator).trimmed().toUpper();
+        const QString value = assignment.mid(separator + 2).trimmed();
+        bool ok = false;
+
+        if (name == QString::fromLatin1("A")) {
+            const int parsed = value.toInt(&ok);
+            if (!ok || hasA) {
+                return false;
+            }
+            *a = parsed;
+            hasA = true;
+        } else if (name == QString::fromLatin1("B")) {
+            const double parsed = value.toDouble(&ok);
+            if (!ok || hasB) {
+                return false;
+            }
+            *b = parsed;
+            hasB = true;
+        } else if (name == QString::fromLatin1("C")) {
+            const bool parsed = stBoolValue(value, &ok);
+            if (!ok || hasC) {
+                return false;
+            }
+            *c = parsed;
+            hasC = true;
+        } else {
+            return false;
+        }
+    }
+
+    return hasA && hasB && hasC;
 }
 
 }
@@ -259,30 +303,30 @@ void OpcUaClient::initializeTargets()
     m_readTargets.append(readVar5);
 
     TargetNode writeVar1;
-    writeVar1.identifier = "globals.group_2_var1";
+    writeVar1.identifier = "globals.group2_var1";
     writeVar1.expectedType = ExpectedInt;
-    writeVar1.row = {"group_2_var1", "group_2_var1", "INT", 300, "", "W",
+    writeVar1.row = {"group2_var1", "group2_var1", "INT", 300, "", "W",
                      nodeIdText(writeVar1.identifier), QString::fromUtf8("固定 NodeId 写入变量")};
     m_writeTargets.append(writeVar1);
 
     TargetNode writeVar2;
-    writeVar2.identifier = "globals.group_2_var2";
+    writeVar2.identifier = "globals.group2_var2";
     writeVar2.expectedType = ExpectedReal;
-    writeVar2.row = {"group_2_var2", "group_2_var2", "REAL", 5.2, "", "W",
+    writeVar2.row = {"group2_var2", "group2_var2", "REAL", 5.2, "", "W",
                      nodeIdText(writeVar2.identifier), QString::fromUtf8("固定 NodeId 写入变量")};
     m_writeTargets.append(writeVar2);
 
     TargetNode writeVar3;
-    writeVar3.identifier = "globals.group_2_var3";
+    writeVar3.identifier = "globals.group2_var3";
     writeVar3.expectedType = ExpectedBool;
-    writeVar3.row = {"group_2_var3", "group_2_var3", "BOOL", false, "", "W",
+    writeVar3.row = {"group2_var3", "group2_var3", "BOOL", false, "", "W",
                      nodeIdText(writeVar3.identifier), QString::fromUtf8("固定 NodeId 写入变量")};
     m_writeTargets.append(writeVar3);
 
     TargetNode writeVar4;
-    writeVar4.identifier = "globals.group_2_var4";
+    writeVar4.identifier = "globals.group2_var4";
     writeVar4.expectedType = ExpectedIntArray;
-    writeVar4.row = {"group_2_var4", "group_2_var4", "INT ARRAY[0..2]", QString::fromLatin1("[10,20,30]"), "", "W",
+    writeVar4.row = {"group2_var4", "group2_var4", "INT ARRAY[0..2]", QString::fromLatin1("[10,20,30]"), "", "W",
                      nodeIdText(writeVar4.identifier), QString::fromUtf8("固定 NodeId 写入数组")};
     m_writeTargets.append(writeVar4);
 
@@ -292,7 +336,7 @@ void OpcUaClient::initializeTargets()
     writeVar5.structFields.append(StructField("A", "globals.group2_var5.A", ExpectedInt, 10));
     writeVar5.structFields.append(StructField("B", "globals.group2_var5.B", ExpectedReal, 10.8));
     writeVar5.structFields.append(StructField("C", "globals.group2_var5.C", ExpectedBool, true));
-    writeVar5.row = {"group_2_var5", "group_2_var5", "ST_Data", compactStructValue(10, 10.8, true), "", "W",
+    writeVar5.row = {"group2_var5", "group2_var5", "ST_Data", compactStructValue(10, 10.8, true), "", "W",
                      nodeIdText(writeVar5.identifier), QString::fromUtf8("结构体字段 A/B/C 组合写入")};
     m_writeTargets.append(writeVar5);
 }
@@ -424,52 +468,17 @@ bool OpcUaClient::parseTextValue(const TargetNode &target, const QString &textVa
     }
 
     if (target.expectedType == ExpectedStruct) {
-        QJsonParseError parseError;
-        const QJsonDocument doc = QJsonDocument::fromJson(text.toUtf8(), &parseError);
-        if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        int aValue = 0;
+        double bValue = 0.0;
+        bool cValue = false;
+        if (!parseStDataValue(text, &aValue, &bValue, &cValue)) {
             if (errorMessage) {
-                *errorMessage = QString::fromUtf8("%1 需要输入 JSON 对象，例如 {\"A\":10,\"B\":10.8,\"C\":true}。").arg(target.row.name);
+                *errorMessage = QString::fromUtf8("%1 需要输入 ST 结构体格式，例如 (A := 10, B := 10.8, C := TRUE)。").arg(target.row.name);
             }
             return false;
         }
 
-        const QJsonObject object = doc.object();
-        if (!object.contains("A") || !object.contains("B") || !object.contains("C")) {
-            if (errorMessage) {
-                *errorMessage = QString::fromUtf8("%1 必须包含 A、B、C 三个字段。").arg(target.row.name);
-            }
-            return false;
-        }
-        if (!object.value("A").isDouble() || !object.value("B").isDouble()) {
-            if (errorMessage) {
-                *errorMessage = QString::fromUtf8("%1 字段类型应为 A:int, B:real, C:bool。").arg(target.row.name);
-            }
-            return false;
-        }
-
-        const double aNumber = object.value("A").toDouble();
-        const int aValue = static_cast<int>(aNumber);
-        if (aNumber != aValue) {
-            if (errorMessage) {
-                *errorMessage = QString::fromUtf8("%1 字段 A 必须是整数。").arg(target.row.name);
-            }
-            return false;
-        }
-
-        bool boolOk = false;
-        const bool cValue = jsonBoolValue(object.value("C"), &boolOk);
-        if (!boolOk) {
-            if (errorMessage) {
-                *errorMessage = QString::fromUtf8("%1 字段 C 必须是布尔值。").arg(target.row.name);
-            }
-            return false;
-        }
-
-        QJsonObject normalized;
-        normalized.insert("A", aValue);
-        normalized.insert("B", object.value("B").toDouble());
-        normalized.insert("C", cValue);
-        *parsedValue = QString::fromUtf8(QJsonDocument(normalized).toJson(QJsonDocument::Compact));
+        *parsedValue = compactStructValue(aValue, bValue, cValue);
         return true;
     }
 
@@ -580,27 +589,29 @@ bool OpcUaClient::readNodeValue(TargetNode *target)
 
 bool OpcUaClient::readStructValue(TargetNode *target)
 {
-    QJsonObject object;
+    int aValue = 0;
+    double bValue = 0.0;
+    bool cValue = false;
 
     for (int i = 0; i < target->structFields.size(); ++i) {
         StructField *field = &target->structFields[i];
         QString errorMessage;
         if (!readStructField(field, &errorMessage)) {
-            emit logMessage(QString::fromUtf8("读取 %1.%2 失败: %3")
-                            .arg(target->row.id, field->name, errorMessage));
+            emit logMessage(QString::fromUtf8("读取 %1.%2 (%3) 失败: %4")
+                            .arg(target->row.id, field->name, nodeIdText(field->identifier), errorMessage));
             return false;
         }
 
-        if (field->expectedType == ExpectedBool) {
-            object.insert(field->name, field->value.toBool());
-        } else if (field->expectedType == ExpectedReal) {
-            object.insert(field->name, field->value.toDouble());
-        } else {
-            object.insert(field->name, field->value.toInt());
+        if (field->name == QString::fromLatin1("A")) {
+            aValue = field->value.toInt();
+        } else if (field->name == QString::fromLatin1("B")) {
+            bValue = field->value.toDouble();
+        } else if (field->name == QString::fromLatin1("C")) {
+            cValue = field->value.toBool();
         }
     }
 
-    const QVariant convertedValue = QString::fromUtf8(QJsonDocument(object).toJson(QJsonDocument::Compact));
+    const QVariant convertedValue = compactStructValue(aValue, bValue, cValue);
     if (target->row.value != convertedValue) {
         target->row.value = convertedValue;
         emit variableChanged(target->row.id, convertedValue);
@@ -651,39 +662,28 @@ bool OpcUaClient::writeNodeValue(TargetNode *target, const QVariant &value, QStr
 
 bool OpcUaClient::writeStructValue(TargetNode *target, const QVariant &value, QString *errorMessage)
 {
-    QJsonParseError parseError;
-    const QJsonDocument doc = QJsonDocument::fromJson(value.toString().toUtf8(), &parseError);
-    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+    int aValue = 0;
+    double bValue = 0.0;
+    bool cValue = false;
+    if (!parseStDataValue(value.toString(), &aValue, &bValue, &cValue)) {
         if (errorMessage) {
-            *errorMessage = QString::fromUtf8("%1 结构体值格式错误。").arg(target->row.name);
+            *errorMessage = QString::fromUtf8("%1 结构体值格式错误，应为 (A := 10, B := 10.8, C := TRUE)。").arg(target->row.name);
         }
         return false;
     }
 
-    const QJsonObject object = doc.object();
     for (int i = 0; i < target->structFields.size(); ++i) {
         StructField *field = &target->structFields[i];
-        if (!object.contains(field->name)) {
-            if (errorMessage) {
-                *errorMessage = QString::fromUtf8("%1 缺少字段 %2。").arg(target->row.name, field->name);
-            }
-            return false;
-        }
 
         QVariant fieldValue;
-        if (field->expectedType == ExpectedBool) {
-            bool ok = false;
-            fieldValue = jsonBoolValue(object.value(field->name), &ok);
-            if (!ok) {
-                if (errorMessage) {
-                    *errorMessage = QString::fromUtf8("%1.%2 需要布尔值。").arg(target->row.name, field->name);
-                }
-                return false;
-            }
-        } else if (field->expectedType == ExpectedReal) {
-            fieldValue = object.value(field->name).toDouble();
+        if (field->name == QString::fromLatin1("A")) {
+            fieldValue = aValue;
+        } else if (field->name == QString::fromLatin1("B")) {
+            fieldValue = bValue;
+        } else if (field->name == QString::fromLatin1("C")) {
+            fieldValue = cValue;
         } else {
-            fieldValue = object.value(field->name).toInt();
+            continue;
         }
 
         if (!field->nodeId || !writeScalarValue(*field->nodeId, field->expectedType, fieldValue, target->row.name + "." + field->name, errorMessage)) {

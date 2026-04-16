@@ -24,7 +24,8 @@ MainWindow::MainWindow(OpcUaClient *client, QWidget *parent)
     , m_client(client)
 {
     setWindowTitle(QString::fromUtf8("Qt OPC UA 读写接入示例"));
-    resize(1180, 780);
+    resize(1280, 780);
+    setMinimumWidth(1280);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(createStatusBox());
@@ -49,7 +50,7 @@ MainWindow::MainWindow(OpcUaClient *client, QWidget *parent)
     updateConnectionState(QString::fromUtf8("未连接"));
     updateResolvedCount(0, m_client->readVariables().size() + m_client->writeVariables().size());
     updateRefreshTime(QDateTime());
-    appendLog(QString::fromUtf8("界面已加载。group1 用于读取，group_2 用于写入。"));
+    appendLog(QString::fromUtf8("界面已加载。group1 用于读取，group2 用于写入。"));
 }
 
 void MainWindow::updateVariable(const QString &id, const QVariant &value)
@@ -184,7 +185,7 @@ QWidget *MainWindow::createControlBox()
     layout->addWidget(m_writeSelectedButton);
     layout->addWidget(m_writeAllButton);
     layout->addStretch();
-    layout->addWidget(new QLabel(QString::fromUtf8("数组和结构体请输入 JSON，例如 [10,20,30] 或 {\"A\":10,\"B\":10.8,\"C\":true}。"), this));
+    layout->addWidget(new QLabel(QString::fromUtf8("数组请输入 JSON，例如 [10,20,30]；结构体请输入 ST 格式，例如 (A := 10, B := 10.8, C := TRUE)。"), this));
 
     return box;
 }
@@ -206,7 +207,7 @@ QWidget *MainWindow::createReadTableBox()
 
 QWidget *MainWindow::createWriteTableBox()
 {
-    QGroupBox *box = new QGroupBox(QString::fromUtf8("写入数据：group_2"), this);
+    QGroupBox *box = new QGroupBox(QString::fromUtf8("写入数据：group2"), this);
     QVBoxLayout *layout = new QVBoxLayout(box);
 
     QLabel *hintLabel = new QLabel(QString::fromUtf8("“读取值”来自设备回读；只编辑“设定值”列，连接成功后可写入设备。"), this);
@@ -268,10 +269,33 @@ void MainWindow::fillTable(QTableWidget *table, const QVector<VariableRow> &vari
                                          << "OPC UA NodeId"
                                          << QString::fromUtf8("说明"));
     }
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    table->horizontalHeader()->setSectionResizeMode(valueEditable ? 8 : 7, QHeaderView::Stretch);
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->horizontalHeader()->setMinimumSectionSize(48);
+    table->horizontalHeader()->setSectionsMovable(false);
     table->setRowCount(variables.size());
     rowMap->clear();
+
+    if (valueEditable) {
+        table->setColumnWidth(0, 110);
+        table->setColumnWidth(1, 110);
+        table->setColumnWidth(2, 135);
+        table->setColumnWidth(3, 245);
+        table->setColumnWidth(4, 245);
+        table->setColumnWidth(5, 55);
+        table->setColumnWidth(6, 60);
+        table->setColumnWidth(7, 260);
+        table->setColumnWidth(8, 180);
+    } else {
+        table->setColumnWidth(0, 110);
+        table->setColumnWidth(1, 110);
+        table->setColumnWidth(2, 135);
+        table->setColumnWidth(3, 245);
+        table->setColumnWidth(4, 55);
+        table->setColumnWidth(5, 60);
+        table->setColumnWidth(6, 260);
+        table->setColumnWidth(7, 180);
+    }
 
     for (int row = 0; row < variables.size(); ++row) {
         const VariableRow &variable = variables.at(row);
