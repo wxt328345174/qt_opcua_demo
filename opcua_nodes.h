@@ -11,6 +11,7 @@
 
 namespace OpcUa {
 
+// 类型标记：把 PLC/OPC UA 的值类型映射到程序可处理的几类。
 enum ExpectedType {
     ExpectedInt,
     ExpectedReal,
@@ -34,6 +35,8 @@ struct StructField
     UA_NodeId *nodeId;
 };
 
+// 一个 TargetNode 表示一个可读/可写点位及其运行时 NodeId 绑定。
+// ST_Data 这类结构体会额外维护字段级节点。
 struct TargetNode
 {
     TargetNode();
@@ -45,6 +48,7 @@ struct TargetNode
     UA_NodeId *nodeId;
 };
 
+// 固定点位配置入口：集中管理 endpoint、轮询周期和 group1/group2 变量清单。
 const char *endpointUrl();
 int pollIntervalMs();
 QString nodeIdText(const QString &identifier);

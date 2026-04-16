@@ -9,6 +9,8 @@
 #include <open62541/client_highlevel.h>
 #include <open62541/types_generated.h>
 
+// 值编解码层：集中处理输入校验、文本格式标准化和 UA_Variant 类型转换。
+// 这部分用于隔离“工业数据类型”和“界面输入字符串”之间的差异。
 namespace {
 
 bool stBoolValue(const QString &text, bool *ok)
@@ -129,6 +131,7 @@ bool parseStDataValue(const QString &text, int *a, double *b, bool *c)
     return hasA && hasB && hasC;
 }
 
+// 写入前校验：把表格中输入的字符串转成后续写入需要的 QVariant。
 bool parseTextValue(const TargetNode &target, const QString &textValue, QVariant *parsedValue, QString *errorMessage)
 {
     const QString text = textValue.trimmed();
@@ -248,6 +251,7 @@ QVariant convertVariant(const TargetNode &target, const UA_Variant &value, bool 
     return convertScalarVariant(target.expectedType, target.row.name, value, ok, errorMessage);
 }
 
+// 读取后转换：把 open62541 的 UA_Variant 安全转成 Qt 可展示的 QVariant。
 QVariant convertScalarVariant(ExpectedType expectedType, const QString &name, const UA_Variant &value, bool *ok, QString *errorMessage)
 {
     *ok = false;

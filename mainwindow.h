@@ -12,6 +12,8 @@ class QPushButton;
 class QTableWidget;
 class QTextEdit;
 
+// 界面层：负责创建 Qt Widgets、响应按钮操作，并通过信号槽接收客户端数据。
+// 它不直接调用 open62541 API，只通过 OpcUaClient 读写变量。
 class MainWindow : public QWidget
 {
     Q_OBJECT
@@ -20,6 +22,7 @@ public:
     explicit MainWindow(OpcUaClient *client, QWidget *parent = nullptr);
 
 private slots:
+    // 客户端信号进入界面后的刷新入口。
     void updateVariable(const QString &id, const QVariant &value);
     void updateNodeId(const QString &id, const QString &nodeIdText);
     void updateConnectionState(const QString &stateText);
@@ -30,11 +33,14 @@ private slots:
     void writeAllValues();
 
 private:
+    // 界面搭建被拆成几个区域，可按状态栏、控制区、读表、写表、日志区理解。
     QWidget *createStatusBox();
     QWidget *createControlBox();
     QWidget *createReadTableBox();
     QWidget *createWriteTableBox();
     QWidget *createLogBox();
+
+    // 表格数据装载与写入动作：将 VariableRow 转成 QTableWidgetItem。
     void loadVariables();
     void fillTable(QTableWidget *table, const QVector<VariableRow> &variables, QHash<QString, int> *rowMap, bool valueEditable);
     bool writeRow(int row);

@@ -2,6 +2,8 @@
 
 #include "opcua_value_codec.h"
 
+// 固定点位定义层：把现场演示使用的 endpoint、轮询周期和变量清单集中放在这里。
+// 如果需要扩展点位，优先从 createReadTargets/createWriteTargets 调整。
 namespace {
 
 const char kEndpointUrl[] = "opc.tcp://192.168.0.105:4840";
@@ -134,6 +136,7 @@ QVector<TargetNode> createReadTargets()
     return targets;
 }
 
+// group2 是写入区。程序写入后也会回读这些点位，用于观察设备端实际值。
 QVector<TargetNode> createWriteTargets()
 {
     QVector<TargetNode> targets;

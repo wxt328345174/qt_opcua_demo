@@ -8,6 +8,8 @@
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 
+// 客户端实现层只保留连接生命周期和 OPC UA 读写调度。
+// 点位定义在 opcua_nodes.*，字符串解析和类型转换在 opcua_value_codec.*。
 namespace {
 
 QString disconnectedText()
@@ -44,6 +46,7 @@ OpcUaClient::~OpcUaClient()
     disconnectFromServer();
 }
 
+// 对外数据接口：MainWindow 只拿展示用 VariableRow，不接触内部 TargetNode。
 QString OpcUaClient::endpointUrl() const
 {
     return QString::fromLatin1(OpcUa::endpointUrl());
@@ -102,6 +105,7 @@ void OpcUaClient::connectToServer()
     pollValues();
 }
 
+// 连接生命周期：断开时同时释放 UA_Client 和所有 UA_NodeId。
 void OpcUaClient::disconnectFromServer()
 {
     m_pollTimer.stop();
@@ -147,6 +151,7 @@ bool OpcUaClient::writeValue(const QString &id, const QString &textValue, QStrin
     return true;
 }
 
+// 轮询读取：定时读取 group1 和 group2，group2 回读用于确认写入效果。
 void OpcUaClient::pollValues()
 {
     if (!m_client) {
@@ -227,6 +232,7 @@ void OpcUaClient::clearBindings()
     updateResolvedCount();
 }
 
+// NodeId 绑定：把字符串形式的 ns=1;s=... 转成 open62541 运行时结构。
 OpcUa::TargetNode *OpcUaClient::findWriteTarget(const QString &id)
 {
     for (int i = 0; i < m_writeTargets.size(); ++i) {
@@ -307,6 +313,7 @@ bool OpcUaClient::readNodeValue(OpcUa::TargetNode *target)
     return true;
 }
 
+// 结构体读写：ST_Data 在服务器端按 A/B/C 字段节点处理，界面上组合展示为一个值。
 bool OpcUaClient::readStructValue(OpcUa::TargetNode *target)
 {
     int aValue = 0;

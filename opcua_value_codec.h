@@ -10,6 +10,8 @@ struct UA_Client;
 
 namespace OpcUa {
 
+// 值编解码层：负责界面字符串、Qt QVariant 和 open62541 UA_Variant 之间的转换。
+// 可把它视为“类型翻译器”，避免 UI 和通信层混在一起。
 QString compactStructValue(int a, double b, bool c);
 bool parseStDataValue(const QString &text, int *a, double *b, bool *c);
 bool parseTextValue(const TargetNode &target, const QString &textValue, QVariant *parsedValue, QString *errorMessage);

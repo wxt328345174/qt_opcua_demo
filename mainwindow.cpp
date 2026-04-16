@@ -13,6 +13,8 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
+// MainWindow 是演示程序的界面编排层：
+// 1. 创建各个可见区域；2. 连接按钮和客户端信号；3. 将变量值显示到表格。
 MainWindow::MainWindow(OpcUaClient *client, QWidget *parent)
     : QWidget(parent)
     , m_client(client)
@@ -47,6 +49,7 @@ MainWindow::MainWindow(OpcUaClient *client, QWidget *parent)
     appendLog(QStringLiteral("界面已加载。group1 用于读取，group2 用于写入。"));
 }
 
+// 数据刷新区：客户端按变量 ID 发出更新，界面用哈希表快速定位表格行。
 void MainWindow::updateVariable(const QString &id, const QVariant &value)
 {
     const int readRow = m_readRowById.value(id, -1);
@@ -108,6 +111,7 @@ void MainWindow::appendLog(const QString &text)
     m_logView->append(QStringLiteral("[%1] %2").arg(time, text));
 }
 
+// 写入动作区：按钮只负责收集表格里的设定值，真正写入由 OpcUaClient 完成。
 void MainWindow::writeSelectedValue()
 {
     const int row = m_writeTable->currentRow();
@@ -159,6 +163,7 @@ QWidget *MainWindow::createStatusBox()
     return box;
 }
 
+// 界面构建区：每个 create*Box 对应一个独立功能区。
 QWidget *MainWindow::createControlBox()
 {
     QGroupBox *box = new QGroupBox(QStringLiteral("控制"), this);
@@ -238,6 +243,7 @@ void MainWindow::loadVariables()
     fillTable(m_writeTable, m_client->writeVariables(), &m_writeRowById, true);
 }
 
+// 表格装载区：读取表不可编辑，写入表只允许编辑“设定值”列。
 void MainWindow::fillTable(QTableWidget *table, const QVector<VariableRow> &variables, QHash<QString, int> *rowMap, bool valueEditable)
 {
     if (valueEditable) {
@@ -350,6 +356,7 @@ bool MainWindow::writeRow(int row)
     return true;
 }
 
+// 展示格式区：把 QVariant 统一转成适合界面观察的文本。
 QString MainWindow::displayValue(const QVariant &value) const
 {
     if (value.type() == QVariant::Bool) {
