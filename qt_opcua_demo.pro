@@ -1,33 +1,25 @@
 QT += core gui widgets
 
 CONFIG += c++11
-CONFIG -= app_bundle
 
 TEMPLATE = app
 TARGET = qt_opcua_demo
 
+!linux:error(This project supports openEuler/Linux only.)
+
+INCLUDEPATH += /usr/local/include
+LIBS += /usr/local/lib64/libopen62541.a
+
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    opcua_client.cpp
+    opcua_client.cpp \
+    opcua_nodes.cpp \
+    opcua_value_codec.cpp
 
 HEADERS += \
     mainwindow.h \
     opcua_client.h \
+    opcua_nodes.h \
+    opcua_value_codec.h \
     variable_row.h
-
-unix {
-    packagesExist(open62541) {
-        CONFIG += link_pkgconfig
-        PKGCONFIG += open62541
-    } else {
-        message(open62541 pkg-config metadata not found; falling back to -lopen62541)
-        LIBS += -lopen62541
-    }
-}
-
-win32 {
-    message(Windows is kept as an edit-only environment for this OPC UA demo.)
-}
-
-win32:msvc:QMAKE_CXXFLAGS += /utf-8

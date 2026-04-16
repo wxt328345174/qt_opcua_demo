@@ -13,17 +13,11 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-namespace {
-
-const char kEndpointUrl[] = "opc.tcp://192.168.0.105:4840";
-
-}
-
 MainWindow::MainWindow(OpcUaClient *client, QWidget *parent)
     : QWidget(parent)
     , m_client(client)
 {
-    setWindowTitle(QString::fromUtf8("Qt OPC UA 读写接入示例"));
+    setWindowTitle(QStringLiteral("Qt OPC UA 读写接入示例"));
     resize(1280, 780);
     setMinimumWidth(1280);
 
@@ -47,10 +41,10 @@ MainWindow::MainWindow(OpcUaClient *client, QWidget *parent)
     connect(m_client, &OpcUaClient::resolvedCountChanged, this, &MainWindow::updateResolvedCount);
     connect(m_client, &OpcUaClient::logMessage, this, &MainWindow::appendLog);
 
-    updateConnectionState(QString::fromUtf8("未连接"));
+    updateConnectionState(QStringLiteral("未连接"));
     updateResolvedCount(0, m_client->readVariables().size() + m_client->writeVariables().size());
     updateRefreshTime(QDateTime());
-    appendLog(QString::fromUtf8("界面已加载。group1 用于读取，group2 用于写入。"));
+    appendLog(QStringLiteral("界面已加载。group1 用于读取，group2 用于写入。"));
 }
 
 void MainWindow::updateVariable(const QString &id, const QVariant &value)
@@ -81,10 +75,10 @@ void MainWindow::updateNodeId(const QString &id, const QString &nodeIdText)
 
 void MainWindow::updateConnectionState(const QString &stateText)
 {
-    if (stateText == QString::fromUtf8("已连接")) {
+    if (stateText == QStringLiteral("已连接")) {
         setBadge(m_connectionStateLabel, stateText, "#1f7a3f");
         setWriteControlsEnabled(true);
-    } else if (stateText == QString::fromUtf8("连接中")) {
+    } else if (stateText == QStringLiteral("连接中")) {
         setBadge(m_connectionStateLabel, stateText, "#146c94");
         setWriteControlsEnabled(false);
     } else {
@@ -96,7 +90,7 @@ void MainWindow::updateConnectionState(const QString &stateText)
 void MainWindow::updateRefreshTime(const QDateTime &timestamp)
 {
     if (!timestamp.isValid()) {
-        m_lastRefreshLabel->setText(QString::fromUtf8("未刷新"));
+        m_lastRefreshLabel->setText(QStringLiteral("未刷新"));
         return;
     }
 
@@ -105,20 +99,20 @@ void MainWindow::updateRefreshTime(const QDateTime &timestamp)
 
 void MainWindow::updateResolvedCount(int resolvedCount, int totalCount)
 {
-    m_bindingCountLabel->setText(QString::fromUtf8("%1 / %2").arg(resolvedCount).arg(totalCount));
+    m_bindingCountLabel->setText(QStringLiteral("%1 / %2").arg(resolvedCount).arg(totalCount));
 }
 
 void MainWindow::appendLog(const QString &text)
 {
     const QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
-    m_logView->append(QString("[%1] %2").arg(time, text));
+    m_logView->append(QStringLiteral("[%1] %2").arg(time, text));
 }
 
 void MainWindow::writeSelectedValue()
 {
     const int row = m_writeTable->currentRow();
     if (row < 0) {
-        appendLog(QString::fromUtf8("写入失败：请先选择写入表中的一行。"));
+        appendLog(QStringLiteral("写入失败：请先选择写入表中的一行。"));
         return;
     }
 
@@ -133,32 +127,33 @@ void MainWindow::writeAllValues()
             ++successCount;
         }
     }
-    appendLog(QString::fromUtf8("写入全部完成：成功 %1 项，共 %2 项。")
-              .arg(successCount).arg(m_writeTable->rowCount()));
+    appendLog(QStringLiteral("写入全部完成：成功 %1 项，共 %2 项。")
+              .arg(successCount)
+              .arg(m_writeTable->rowCount()));
 }
 
 QWidget *MainWindow::createStatusBox()
 {
-    QGroupBox *box = new QGroupBox(QString::fromUtf8("连接状态"), this);
+    QGroupBox *box = new QGroupBox(QStringLiteral("连接状态"), this);
     QHBoxLayout *layout = new QHBoxLayout(box);
 
     m_connectionStateLabel = new QLabel(this);
-    m_endpointLabel = new QLabel(QString::fromLatin1(kEndpointUrl), this);
-    m_bindingCountLabel = new QLabel("0 / 10", this);
-    m_lastRefreshLabel = new QLabel(QString::fromUtf8("未刷新"), this);
+    m_endpointLabel = new QLabel(m_client->endpointUrl(), this);
+    m_bindingCountLabel = new QLabel(QStringLiteral("0 / 10"), this);
+    m_lastRefreshLabel = new QLabel(QStringLiteral("未刷新"), this);
 
-    setBadge(m_connectionStateLabel, QString::fromUtf8("未连接"), "#666666");
+    setBadge(m_connectionStateLabel, QStringLiteral("未连接"), "#666666");
 
-    layout->addWidget(new QLabel(QString::fromUtf8("OPC UA:"), this));
+    layout->addWidget(new QLabel(QStringLiteral("OPC UA:"), this));
     layout->addWidget(m_connectionStateLabel);
     layout->addSpacing(16);
-    layout->addWidget(new QLabel(QString::fromUtf8("Endpoint:"), this));
+    layout->addWidget(new QLabel(QStringLiteral("Endpoint:"), this));
     layout->addWidget(m_endpointLabel, 1);
     layout->addSpacing(16);
-    layout->addWidget(new QLabel(QString::fromUtf8("已配置点位:"), this));
+    layout->addWidget(new QLabel(QStringLiteral("已配置点位:"), this));
     layout->addWidget(m_bindingCountLabel);
     layout->addSpacing(16);
-    layout->addWidget(new QLabel(QString::fromUtf8("最近刷新:"), this));
+    layout->addWidget(new QLabel(QStringLiteral("最近刷新:"), this));
     layout->addWidget(m_lastRefreshLabel);
 
     return box;
@@ -166,13 +161,13 @@ QWidget *MainWindow::createStatusBox()
 
 QWidget *MainWindow::createControlBox()
 {
-    QGroupBox *box = new QGroupBox(QString::fromUtf8("控制"), this);
+    QGroupBox *box = new QGroupBox(QStringLiteral("控制"), this);
     QHBoxLayout *layout = new QHBoxLayout(box);
 
-    m_connectButton = new QPushButton(QString::fromUtf8("连接"), this);
-    m_disconnectButton = new QPushButton(QString::fromUtf8("断开"), this);
-    m_writeSelectedButton = new QPushButton(QString::fromUtf8("写入选中项"), this);
-    m_writeAllButton = new QPushButton(QString::fromUtf8("写入全部"), this);
+    m_connectButton = new QPushButton(QStringLiteral("连接"), this);
+    m_disconnectButton = new QPushButton(QStringLiteral("断开"), this);
+    m_writeSelectedButton = new QPushButton(QStringLiteral("写入选中项"), this);
+    m_writeAllButton = new QPushButton(QStringLiteral("写入全部"), this);
 
     m_connectButton->setMinimumHeight(34);
     m_disconnectButton->setMinimumHeight(34);
@@ -185,14 +180,14 @@ QWidget *MainWindow::createControlBox()
     layout->addWidget(m_writeSelectedButton);
     layout->addWidget(m_writeAllButton);
     layout->addStretch();
-    layout->addWidget(new QLabel(QString::fromUtf8("数组请输入 JSON，例如 [10,20,30]；结构体请输入 ST 格式，例如 (A := 10, B := 10.8, C := TRUE)。"), this));
+    layout->addWidget(new QLabel(QStringLiteral("数组请输入 JSON，例如 [10,20,30]；结构体请输入 ST 格式，例如 (A := 10, B := 10.8, C := TRUE)。"), this));
 
     return box;
 }
 
 QWidget *MainWindow::createReadTableBox()
 {
-    QGroupBox *box = new QGroupBox(QString::fromUtf8("读取数据：group1"), this);
+    QGroupBox *box = new QGroupBox(QStringLiteral("读取数据：group1"), this);
     QVBoxLayout *layout = new QVBoxLayout(box);
 
     m_readTable = new QTableWidget(this);
@@ -207,10 +202,10 @@ QWidget *MainWindow::createReadTableBox()
 
 QWidget *MainWindow::createWriteTableBox()
 {
-    QGroupBox *box = new QGroupBox(QString::fromUtf8("写入数据：group2"), this);
+    QGroupBox *box = new QGroupBox(QStringLiteral("写入数据：group2"), this);
     QVBoxLayout *layout = new QVBoxLayout(box);
 
-    QLabel *hintLabel = new QLabel(QString::fromUtf8("“读取值”来自设备回读；只编辑“设定值”列，连接成功后可写入设备。"), this);
+    QLabel *hintLabel = new QLabel(QStringLiteral("“读取值”来自设备回读；只编辑“设定值”列，连接成功后可写入设备。"), this);
     m_writeTable = new QTableWidget(this);
     m_writeTable->setEditTriggers(QAbstractItemView::DoubleClicked
                                   | QAbstractItemView::SelectedClicked
@@ -226,7 +221,7 @@ QWidget *MainWindow::createWriteTableBox()
 
 QWidget *MainWindow::createLogBox()
 {
-    QGroupBox *box = new QGroupBox(QString::fromUtf8("运行日志"), this);
+    QGroupBox *box = new QGroupBox(QStringLiteral("运行日志"), this);
     QVBoxLayout *layout = new QVBoxLayout(box);
 
     m_logView = new QTextEdit(this);
@@ -249,25 +244,25 @@ void MainWindow::fillTable(QTableWidget *table, const QVector<VariableRow> &vari
         table->setColumnCount(9);
         table->setHorizontalHeaderLabels(QStringList()
                                          << "ID"
-                                         << QString::fromUtf8("名称")
-                                         << QString::fromUtf8("类型")
-                                         << QString::fromUtf8("读取值")
-                                         << QString::fromUtf8("设定值")
-                                         << QString::fromUtf8("单位")
-                                         << QString::fromUtf8("读写")
+                                         << QStringLiteral("名称")
+                                         << QStringLiteral("类型")
+                                         << QStringLiteral("读取值")
+                                         << QStringLiteral("设定值")
+                                         << QStringLiteral("单位")
+                                         << QStringLiteral("读写")
                                          << "OPC UA NodeId"
-                                         << QString::fromUtf8("说明"));
+                                         << QStringLiteral("说明"));
     } else {
         table->setColumnCount(8);
         table->setHorizontalHeaderLabels(QStringList()
                                          << "ID"
-                                         << QString::fromUtf8("名称")
-                                         << QString::fromUtf8("类型")
-                                         << QString::fromUtf8("当前值")
-                                         << QString::fromUtf8("单位")
-                                         << QString::fromUtf8("读写")
+                                         << QStringLiteral("名称")
+                                         << QStringLiteral("类型")
+                                         << QStringLiteral("当前值")
+                                         << QStringLiteral("单位")
+                                         << QStringLiteral("读写")
                                          << "OPC UA NodeId"
-                                         << QString::fromUtf8("说明"));
+                                         << QStringLiteral("说明"));
     }
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     table->horizontalHeader()->setStretchLastSection(true);
@@ -342,7 +337,7 @@ bool MainWindow::writeRow(int row)
     QTableWidgetItem *idItem = m_writeTable->item(row, 0);
     QTableWidgetItem *valueItem = m_writeTable->item(row, 4);
     if (!idItem || !valueItem) {
-        appendLog(QString::fromUtf8("写入失败：第 %1 行内容不完整。").arg(row + 1));
+        appendLog(QStringLiteral("写入失败：第 %1 行内容不完整。").arg(row + 1));
         return false;
     }
 
